@@ -1,7 +1,9 @@
 const terms = [6, 9, 12, 15, 18, 21, 24]
 const interestLookup = [
-  { x: 0.79, y: 1.43833333333333 },
-  { x: 2.88, y: 2.88428906980115 },
+  { x: 0.99, y: 1.79 },
+  { x: 1.19, y: 2.12 },
+  { x: 1.39, y: 2.12 },
+  { x: 0.55, y: 1.09 },
 ]
 
 // current available terms (may be restricted by selected interest)
