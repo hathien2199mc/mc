@@ -1,28 +1,59 @@
 const terms = [6, 9, 12, 15, 18, 21, 24]
+// x là lãi đang chạy
+// y là lãi thực tế
 const interestLookup = [
+  {
+    x: 0,
+    y: 0,
+    minDownpaymentPercent: 20,
+    maxDownpaymentPercent: 70,
+    termRange: [9, 15]
+  },
   { x: 0.57, y: 1.09 },
-  { x: 0.79, y: 1.44 },
-  { x: 0.99, y: 1.79 },
-  { x: 1.19, y: 2.12 },
-  { x: 1.39, y: 2.46 }
+  {
+    x: 0.79,
+    y: 1.44,
+    minDownpaymentPercent: 20,
+    maxDownpaymentPercent: 70,
+    termRange: [12, 24]
+  },
+  {
+    x: 0.99,
+    y: 1.79,
+    minDownpaymentPercent: 20,
+    maxDownpaymentPercent: 70,
+    termRange: [12, 24]
+  },
+  {
+    x: 1.19,
+    y: 2.12,
+    minDownpaymentPercent: 10,
+    maxDownpaymentPercent: 70,
+    termRange: [12, 24]
+  },
+  {
+    x: 1.39,
+    y: 2.46,
+    minDownpaymentPercent: 10,
+    maxDownpaymentPercent: 70,
+    termRange: [12, 24]
+  }
 ]
+
+// interestLookup có thể chứa cả lãi và quy tắc đặc biệt:
+// - minDownpaymentPercent: phần trăm trả trước tối thiểu
+// - maxDownpaymentPercent: phần trăm trả trước tối đa
+// - termRange: mảng [minTerm, maxTerm] giới hạn kỳ hạn cho lãi suất đó
+// Việc này gộp chung interestLookup và specialInterestRules trong cùng một cấu trúc.
 
 // current available terms (may be restricted by selected interest)
 let currentTerms = [...terms]
 
-// special rules for certain interest options
-const specialInterestRules = {
-  // 0.55: { minDownpaymentPercent: 10, termRange: [15, 24] },
-  // 0.69: { minDownpaymentPercent: 20, termRange: [6, 12] },
-  // 0.79: { minDownpaymentPercent: 10, termRange: [6, 12] },
-}
-
 function applyInterestRules (x) {
-  const key = Number(x)
-  const rule = specialInterestRules[key]
+  const rule = getInterestRule(x)
   // reset to defaults
   currentTerms = [...terms]
-  if (rule) {
+  if (rule && rule.termRange) {
     const [minT, maxT] = rule.termRange
     currentTerms = terms.filter(t => t >= minT && t <= maxT)
     // do NOT auto-change user inputs here; validation happens in calculate()
@@ -30,7 +61,8 @@ function applyInterestRules (x) {
 }
 
 function getInterestRule (x) {
-  return specialInterestRules[Number(x)] || null
+  const key = Number(x)
+  return interestLookup.find(item => item.x === key) || null
 }
 
 const vehiclePriceInput = document.getElementById('vehicle-price')
@@ -685,17 +717,38 @@ function calculate (isAuto = false) {
   // validate against interest-specific rules
   const curPercent = price ? (downpayment / price) * 100 : 0
   const rule = getInterestRule(interestValue)
-  if (rule && curPercent < rule.minDownpaymentPercent) {
-    const msg = `Với lãi ${interestValue}, yêu cầu trả trước tối thiểu ${rule.minDownpaymentPercent}%`
-    if (!isAuto) {
-      alert(msg)
-      downpaymentInput.focus()
-    } else {
-      resultStatus.textContent = msg
-      resultStatus.style.background = '#fff4f4'
-      resultStatus.style.color = '#dc2626'
+  if (rule) {
+    if (
+      rule.minDownpaymentPercent != null &&
+      curPercent < rule.minDownpaymentPercent
+    ) {
+      const msg = `Với lãi ${interestValue}, yêu cầu trả trước tối thiểu ${rule.minDownpaymentPercent}%`
+      if (!isAuto) {
+        alert(msg)
+        downpaymentInput.focus()
+      } else {
+        resultStatus.textContent = msg
+        resultStatus.style.background = '#fff4f4'
+        resultStatus.style.color = '#dc2626'
+      }
+      return
     }
-    return
+
+    if (
+      rule.maxDownpaymentPercent != null &&
+      curPercent > rule.maxDownpaymentPercent
+    ) {
+      const msg = `Với lãi ${interestValue}, trả trước tối đa ${rule.maxDownpaymentPercent}%`
+      if (!isAuto) {
+        alert(msg)
+        downpaymentInput.focus()
+      } else {
+        resultStatus.textContent = msg
+        resultStatus.style.background = '#fff4f4'
+        resultStatus.style.color = '#dc2626'
+      }
+      return
+    }
   }
   const loan = price - downpayment
   const hasInsurance = includeInsuranceCheckbox.checked
@@ -737,7 +790,23 @@ interestInput.addEventListener('input', () => {
   calculate(true)
 })
 
+// Nghe sự kiện khi người dùng thay đổi ngày ký hợp đồng bằng bàn phím
+signingDateInput.addEventListener('input', () => calculate(true))
+// Nghe sự kiện khi người dùng chọn ngày từ trình chọn (date picker)
 signingDateInput.addEventListener('change', () => calculate(true))
+
+const signingDateTrigger = document.getElementById('signing-date-trigger')
+if (signingDateTrigger) {
+  signingDateTrigger.addEventListener('click', () => {
+    // Focus vào input ngày để kích hoạt trình chọn ngày
+    signingDateInput.focus()
+    // Nếu trình duyệt hỗ trợ showPicker(), mở date picker trực tiếp
+    if (typeof signingDateInput.showPicker === 'function') {
+      signingDateInput.showPicker()
+    }
+  })
+}
+
 includeInsuranceCheckbox.addEventListener('change', () => calculate(true))
 
 window.addEventListener('DOMContentLoaded', () => {
