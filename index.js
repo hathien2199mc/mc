@@ -1,9 +1,10 @@
 const terms = [6, 9, 12, 15, 18, 21, 24]
 const interestLookup = [
+  { x: 0.57, y: 1.09 },
+  { x: 0.79, y: 1.44 },
   { x: 0.99, y: 1.79 },
   { x: 1.19, y: 2.12 },
-  { x: 1.39, y: 2.12 },
-  { x: 0.55, y: 1.09 },
+  { x: 1.39, y: 2.46 }
 ]
 
 // current available terms (may be restricted by selected interest)
@@ -187,7 +188,14 @@ function getNextDueDate (prevDueDate, dayU29) {
   return addMonths(prevDueDate, 1)
 }
 
-function calculateDetailedSchedule (loanAmount, hasInsurance, monthlyRate, tenorMonths, signingDateInput, fee = 12000) {
+function calculateDetailedSchedule (
+  loanAmount,
+  hasInsurance,
+  monthlyRate,
+  tenorMonths,
+  signingDateInput,
+  fee = 12000
+) {
   const signingDate = parseDate(signingDateInput)
   const loanAfterIns = hasInsurance ? loanAmount * 1.055 : loanAmount
   const annualRate = monthlyRate * 12
@@ -222,7 +230,7 @@ function calculateDetailedSchedule (loanAmount, hasInsurance, monthlyRate, tenor
 
   let prodAll = 1.0
   for (let i = 0; i < 72; i++) {
-    prodAll *= (1.0 + P_all[i])
+    prodAll *= 1.0 + P_all[i]
   }
   const numerator = prodAll * loanAfterIns
 
@@ -231,7 +239,7 @@ function calculateDetailedSchedule (loanAmount, hasInsurance, monthlyRate, tenor
     if (Q_all[k] === 0) continue
     let pProd = 1.0
     for (let i = k + 1; i < 72; i++) {
-      pProd *= (1.0 + P_all[i])
+      pProd *= 1.0 + P_all[i]
     }
     denominator += pProd * Q_all[k]
   }
@@ -248,7 +256,9 @@ function calculateDetailedSchedule (loanAmount, hasInsurance, monthlyRate, tenor
     const endDate = dates[k]
     const interestDays = days[k - 1]
 
-    const interestInPeriod = Math.round((currentBalance * interestDays * annualRate) / 365.0)
+    const interestInPeriod = Math.round(
+      (currentBalance * interestDays * annualRate) / 365.0
+    )
 
     let principalInPeriod
     if (k < tenorMonths) {
@@ -290,7 +300,12 @@ function calculateDetailedSchedule (loanAmount, hasInsurance, monthlyRate, tenor
   }
 }
 
-function calculateExcelPayment (principal, annualRatePercent, termMonths, signingDateInputValue = '') {
+function calculateExcelPayment (
+  principal,
+  annualRatePercent,
+  termMonths,
+  signingDateInputValue = ''
+) {
   if (!principal || !termMonths || termMonths <= 0) {
     return 0
   }
@@ -303,7 +318,13 @@ function calculateExcelPayment (principal, annualRatePercent, termMonths, signin
 
   const monthlyRate = annualRate / 12
   const signingDateValue = signingDateInputValue || getDefaultSigningDateValue()
-  const result = calculateDetailedSchedule(principal, false, monthlyRate, termMonths, signingDateValue)
+  const result = calculateDetailedSchedule(
+    principal,
+    false,
+    monthlyRate,
+    termMonths,
+    signingDateValue
+  )
 
   return result.summary.pmtRounded
 }
@@ -457,10 +478,16 @@ function showRefinedSuggestions (base, gia) {
 
 function renderTermRows (debt, annualRatePercent, loan) {
   termGrid.innerHTML = ''
-  const signingDateValue = signingDateInput.value || getDefaultSigningDateValue()
+  const signingDateValue =
+    signingDateInput.value || getDefaultSigningDateValue()
 
   currentTerms.forEach(term => {
-    const payment = calculateExcelPayment(debt, annualRatePercent, term, signingDateValue)
+    const payment = calculateExcelPayment(
+      debt,
+      annualRatePercent,
+      term,
+      signingDateValue
+    )
     const monthlyPayment = roundup1000(payment) + 12000
     const card = document.createElement('article')
     const cashDiff = monthlyPayment * term - loan
@@ -576,7 +603,12 @@ async function exportQuote () {
 
   const planLines = currentTerms
     .map(term => {
-      const payment = calculateExcelPayment(totalDebt, annualRate, term, signingDateInput.value || getDefaultSigningDateValue())
+      const payment = calculateExcelPayment(
+        totalDebt,
+        annualRate,
+        term,
+        signingDateInput.value || getDefaultSigningDateValue()
+      )
       const monthlyPayment = roundup1000(payment) + 12000
       const totalInterest = showInterestCheckbox.checked
         ? ` | Lãi: ${formatMoney(monthlyPayment * term - loan)} ₫`
@@ -670,7 +702,8 @@ function calculate (isAuto = false) {
   const insurance = hasInsurance ? loan * 0.055 : 0
   const totalDebt = loan + insurance
   const annualRate = interpolateRate(interestValue, interestLookup)
-  const signingDateValue = signingDateInput.value || getDefaultSigningDateValue()
+  const signingDateValue =
+    signingDateInput.value || getDefaultSigningDateValue()
   if (!signingDateInput.value) {
     signingDateInput.value = signingDateValue
   }
