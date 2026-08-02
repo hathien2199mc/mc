@@ -1,4 +1,5 @@
 const terms = [6, 9, 12, 15, 18, 21, 24]
+const ketLogin = 'Mc2026'
 // x là lãi đang chạy
 // y là lãi thực tế
 const interestLookup = [
@@ -87,6 +88,14 @@ const confirmExportBtn = document.getElementById('confirmExport')
 const closeExportModalBtn = document.getElementById('closeExportModal')
 const cancelExportBtn = document.getElementById('cancelExport')
 const exportQuoteButton = document.getElementById('export-quote-btn')
+const logoutButton = document.getElementById('logoutButton')
+const loginOverlay = document.getElementById('loginOverlay')
+const loginPassword = document.getElementById('loginPassword')
+const loginButton = document.getElementById('loginButton')
+const loginError = document.getElementById('loginError')
+const pageShell = document.querySelector('.page-shell')
+let logoutTimerId = null
+const LOGIN_DURATION_MS = 5 * 60 * 1000
 
 function formatMoney (value) {
   return new Intl.NumberFormat('vi-VN').format(Math.round(value))
@@ -130,6 +139,84 @@ function getDefaultSigningDateValue () {
   const month = String(now.getMonth() + 1).padStart(2, '0')
   const day = String(now.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
+}
+
+function clearLogoutTimer () {
+  if (logoutTimerId != null) {
+    clearTimeout(logoutTimerId)
+    logoutTimerId = null
+  }
+}
+
+function scheduleLogout () {
+  clearLogoutTimer()
+  const loginAt = Number(localStorage.getItem('mcPasswordVerifiedAt') || '0')
+  const expiresAt = loginAt + LOGIN_DURATION_MS
+  const now = Date.now()
+  const delay = Math.max(0, expiresAt - now)
+  if (delay <= 0) {
+    forceLogout('Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.')
+    return
+  }
+  logoutTimerId = setTimeout(() => {
+    forceLogout('Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.')
+  }, delay)
+}
+
+function unlockPage () {
+  if (pageShell) pageShell.style.display = 'block'
+  if (loginOverlay) loginOverlay.style.display = 'none'
+  loginPassword.value = ''
+  localStorage.setItem('mcPasswordVerified', '1')
+  localStorage.setItem('mcPasswordVerifiedAt', String(Date.now()))
+  scheduleLogout()
+}
+
+function lockPage () {
+  if (pageShell) pageShell.style.display = 'none'
+  if (loginOverlay) loginOverlay.style.display = 'flex'
+  clearLogoutTimer()
+}
+
+function forceLogout (message) {
+  localStorage.removeItem('mcPasswordVerified')
+  localStorage.removeItem('mcPasswordVerifiedAt')
+  if (loginError) {
+    loginError.textContent = message
+    loginError.style.display = 'block'
+  }
+  lockPage()
+}
+
+function checkLogin () {
+  const stored = localStorage.getItem('mcPasswordVerified')
+  const loginAt = Number(localStorage.getItem('mcPasswordVerifiedAt') || '0')
+  if (stored === '1' && loginAt > 0) {
+    const now = Date.now()
+    if (now - loginAt < LOGIN_DURATION_MS) {
+      unlockPage()
+      return true
+    }
+  }
+  lockPage()
+  return false
+}
+
+function attemptLogin () {
+  const value = loginPassword ? loginPassword.value.trim() : ''
+  if (value === ketLogin) {
+    if (loginError) {
+      loginError.style.display = 'none'
+    }
+    unlockPage()
+    calculate(true)
+    return
+  }
+
+  if (loginError) {
+    loginError.textContent = 'Mật khẩu không đúng. Vui lòng thử lại.'
+    loginError.style.display = 'block'
+  }
 }
 
 function parseDate (dateStr) {
@@ -809,6 +896,12 @@ if (signingDateTrigger) {
 
 includeInsuranceCheckbox.addEventListener('change', () => calculate(true))
 
+if (logoutButton) {
+  logoutButton.addEventListener('click', () => {
+    forceLogout('Bạn đã đăng xuất thành công.')
+  })
+}
+
 window.addEventListener('DOMContentLoaded', () => {
   const savedTuVanVien = localStorage.getItem('tuVanVien')
   if (savedTuVanVien) {
@@ -825,4 +918,18 @@ window.addEventListener('DOMContentLoaded', () => {
   renderTermRows(0, 0, 0)
   genTraTienSuggest()
   renderInterestOptions()
+
+  if (loginButton) {
+    loginButton.addEventListener('click', attemptLogin)
+  }
+
+  if (loginPassword) {
+    loginPassword.addEventListener('keyup', event => {
+      if (event.key === 'Enter') {
+        attemptLogin()
+      }
+    })
+  }
+
+  checkLogin()
 })

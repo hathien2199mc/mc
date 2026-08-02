@@ -10,14 +10,30 @@
 </head>
 
 <body>
-    <div class="page-shell">
+    <div id="loginOverlay" style="position:fixed;inset:0;background:#eff2f5cc;display:flex;align-items:center;justify-content:center;z-index:9999;">
+      <div style="background:#fff;border-radius:20px;padding:32px;max-width:420px;width:100%;box-shadow:0 32px 80px rgba(0,0,0,.25);font-family:Arial, sans-serif;">
+        <h1 style="margin:0 0 16px;font-size:24px;color:#111">Đăng nhập MC</h1>
+        <p style="margin:0 0 16px;color:#444;line-height:1.5;">Nhập mật khẩu để truy cập trang.</p>
+        <input id="loginPassword" type="password" placeholder="Mật khẩu" autofocus style="width:100%;padding:12px 14px;border:1px solid #cbd5e1;border-radius:12px;font-size:16px;margin-bottom:12px;outline:none;" />
+        <div style="display:flex;gap:12px;align-items:center;">
+          <button id="loginButton" type="button" style="flex:1;background:#1d4ed8;color:#fff;border:none;border-radius:12px;padding:12px 16px;font-size:16px;cursor:pointer;">Đăng nhập</button>
+        </div>
+        <p id="loginError" style="margin:12px 0 0;color:#b91c1c;display:none;font-size:14px;"></p>
+      </div>
+    </div>
+    <div class="page-shell" style="display:none;">
         <header class="hero">
             <div>
                 <span class="eyebrow">Bảng tính khoản vay MC</span>
                 <h1>Tính nhanh giá xe và khoản vay</h1>
                 <p>Nhập giá xe, trả trước và lãi suất để xem số tiền góp hàng tháng cho các kỳ hạn cố định.</p>
             </div>
-            <div class="badge">Kỳ hạn cố định: 6, 9, 12, 15, 18, 21, 24 tháng</div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+              <div class="badge">Kỳ hạn cố định: 6, 9, 12, 15, 18, 21, 24 tháng</div>
+              <button id="logoutButton" type="button" class="btn btn-danger" style="border-radius:999px;display:flex;align-items:center;justify-content:center;" aria-label="Đăng xuất" title="Đăng xuất">
+                Đăng xuất
+              </button>
+            </div>
         </header>
 
         <main class="calculator-grid">
