@@ -6,7 +6,7 @@ const interestLookup = [
   {
     x: 0,
     y: 0,
-    minDownpaymentPercent: 20,
+    minDownpaymentPercent: 10,
     maxDownpaymentPercent: 70,
     termRange: [9, 15]
   },
