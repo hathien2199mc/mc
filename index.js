@@ -14,14 +14,14 @@ const interestLookup = [
   {
     x: 0.79,
     y: 1.44,
-    minDownpaymentPercent: 20,
+    minDownpaymentPercent: 10,
     maxDownpaymentPercent: 70,
     termRange: [12, 24]
   },
   {
     x: 0.99,
     y: 1.79,
-    minDownpaymentPercent: 20,
+    minDownpaymentPercent: 10,
     maxDownpaymentPercent: 70,
     termRange: [12, 24]
   },
